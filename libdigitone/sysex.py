@@ -9,10 +9,10 @@ def decode(filename):
     """ Decodes sysex file and converts to bytestring
 
     :param filename: expects binary .syx file from the digitone
-    :return: hexlified byte string representing binary file
+    :return: byte string representing binary file
     """
     with open(filename, 'rb') as file:
-        sysex = hexlify(file.read())
+        sysex = file.read()
         return sysex
 
 
@@ -25,10 +25,24 @@ def encode(sysex, filename='digi_out.syx'):
     :param filename: desired output binary .syx file name
     """
     with open(filename, 'wb') as file:
-        sysex = unhexlify(sysex)
+        sysex = sysex
         file.write(sysex)
 
     file.close()
+
+
+def split_list(test_list, v):
+    # using list comprehension + zip() + slicing + enumerate()
+    # Split list into lists by particular value
+    size = len(test_list)
+    idx_list = [idx for idx, val in
+                enumerate(test_list) if val == v]
+
+    res = [test_list[i: j] for i, j in
+           zip([0] + idx_list, idx_list +
+               ([size] if idx_list[-1] != size else []))]
+
+    return res
 
 
 def parse(sysex):
@@ -38,17 +52,10 @@ def parse(sysex):
     :return: list of sysex messages, parsed into lists of individual bytes
     """
     messages = []
-    for message in sysex.split(SYSEX_BEGIN):
+    for message in split_list(sysex, 0xf0):
 
-        # filter out the the first split
-        if len(message) > 20:
-            messages.append(SYSEX_BEGIN + message)
-
-    if len(messages) > 1:
-        for message in range(len(messages)):
-            messages[message] = [messages[message][i:i + 2] for i in range(0, len(messages[message]), 2)]
-    else:
-        messages = [messages[0][i:i + 2] for i in range(0, len(messages[0]), 2)]
+        if message[:len(SYSEX_BEGIN)] == SYSEX_BEGIN:
+            messages.append(message)
 
     return messages
 
@@ -96,7 +103,7 @@ def request(message, track=0):
     :return: None
     """
     try:
-        outport = mido.open_output('Elektron Digitone Digitone out 1')
+        outport = mido.open_output('Elektron Digitone')
     except OSError:
         logging.ERROR('Cannot find Digitone Ports. Is it connected? Exiting...')
         exit()
@@ -138,7 +145,7 @@ def listen():
     # The port may take a few seconds to open. The while loop stops
     # the script while waiting to connect.
 
-    with mido.open_input('Elektron Digitone Digitone in 1') as inport:
+    with mido.open_input('Elektron Digitone') as inport:
 
         # wait for the inport to open up
         while inport.closed:

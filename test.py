@@ -20,7 +20,7 @@ def setup():
     global args
     args = parser.parse_args()
 
-    logging.basicConfig(format='[ %(levelname)s ] :: > %(message)s', level=logging.INFO)
+    logging.basicConfig(format='[ %(levelname)s ] :: > %(message)s', level=logging.DEBUG)
 
 def listen():
     for message in dt.listen():
@@ -190,7 +190,7 @@ def main():
     else:
         sysex = dt.decode('data/factory.syx')
         message = dt.parse(sysex)
-        for msg in message:
+        for msg in message[:3]:
             patch = dt.Sound(msg)
             logging.info('Prefix:  {}'.format(patch.prefix))
             # logging.info('Meta:    {}'.format(patch.meta))
